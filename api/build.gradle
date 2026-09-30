@@ -10,10 +10,10 @@ group = 'org.jpo'
 version = '25.0.9'
 description = 'api'
 
+// Juiste plek voor source/target compatibility
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 repositories {
@@ -31,7 +31,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
-    // Version is managed by Spring Boot BOM
     implementation 'tools.jackson.module:jackson-module-kotlin' 
     
     testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
@@ -44,7 +43,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(25)
+    // Geen toolchain, gebruikt systeem-JDK (Java 26 via gradle.properties)
     compilerOptions {
         freeCompilerArgs.addAll '-Xjsr305=strict', '-Xannotation-default-target=param-property'
     }
@@ -55,10 +54,8 @@ tasks.named('test') {
 }
 
 tasks.named('bootRun') {
-    // Ensures that the forked process inherits the environment variables set in the IDE
     environment = System.getenv()
 }
-
 
 tasks.named('processResources') {
     dependsOn ':angular:angularBuild'
@@ -74,14 +71,11 @@ bootBuildImage {
     tags = ["${dockerHubUsername}/jpoviewer:${version}"]
 
     if (isNative) {
-        // Native build configuration
         builder = "paketobuildpacks/builder-jammy-tiny"
         environment = [
                 "BP_NATIVE_IMAGE": "true"
         ]
     } else {
-        // Standard JVM build configuration
-        // Using builder-jammy-base and explicitly forcing the JVM-only buildpack
         builder = "paketobuildpacks/builder-jammy-base"
         buildpacks = ["paketo-buildpacks/java"]
         environment = [
